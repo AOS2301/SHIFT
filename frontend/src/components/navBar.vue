@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const searchQuery = ref('')
+const contaAberta = ref(false)
+const contaRef = ref<HTMLElement | null>(null)
 
 const primaryLinks = ['Feminino', 'Masculino', 'Infantil']
 const brandLinks = ['Nike', 'Adidas', 'Vans', 'New Balance', 'Puma']
@@ -9,6 +11,20 @@ const brandLinks = ['Nike', 'Adidas', 'Vans', 'New Balance', 'Puma']
 function handleSearch() {
   console.log('Buscando por:', searchQuery.value)
 }
+
+function toggleConta() {
+  contaAberta.value = !contaAberta.value
+}
+
+// Fecha o dropdown se clicar fora dele
+function handleClickOutside(event: MouseEvent) {
+  if (contaRef.value && !contaRef.value.contains(event.target as Node)) {
+    contaAberta.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <template>
@@ -37,14 +53,39 @@ function handleSearch() {
       </div>
 
       <div class="flex items-center gap-7 ml-auto">
-        <button class="flex items-center gap-2">
-          <span class="w-8 h-8 rounded-full border border-line bg-bg-elevated flex items-center justify-center text-ink-secondary">
-            <i class="ti ti-user" aria-hidden="true"></i>
-          </span>
-          <span class="text-sm font-bold">Minha conta</span>
-          <i class="ti ti-chevron-down text-xs text-ink-secondary" aria-hidden="true"></i>
-        </button>
 
+        <!-- MINHA CONTA (com dropdown) -->
+        <div ref="contaRef" class="relative">
+          <button class="flex items-center gap-2" @click="toggleConta">
+            <span class="w-8 h-8 rounded-full border border-line bg-bg-elevated flex items-center justify-center text-ink-secondary">
+              <i class="ti ti-user" aria-hidden="true"></i>
+            </span>
+            <span class="text-sm font-bold">Minha conta</span>
+            <i class="ti ti-chevron-down text-xs text-ink-secondary" aria-hidden="true"></i>
+          </button>
+
+          <div
+            v-if="contaAberta"
+            class="absolute right-0 top-full mt-2 w-48 bg-bg-elevated border border-line rounded shadow-lg overflow-hidden z-10"
+          >
+            <router-link
+              to="/login"
+              class="block px-4 py-3 text-sm hover:bg-bg-elevated-2 transition-colors"
+              @click="contaAberta = false"
+            >
+              Entrar
+            </router-link>
+            <router-link
+              to="/cadastro"
+              class="block px-4 py-3 text-sm border-t border-line hover:bg-bg-elevated-2 transition-colors"
+              @click="contaAberta = false"
+            >
+              Criar conta
+            </router-link>
+          </div>
+        </div>
+
+        <!-- CARRINHO -->
         <router-link to="/carrinho" class="flex items-center gap-2">
           <span class="relative w-7 h-7 rounded-md border border-line bg-bg-elevated flex items-center justify-center">
             <i class="ti ti-shopping-bag text-sm" aria-hidden="true"></i>
