@@ -1,0 +1,177 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-19T00:00:00.000Z",
+  "__export_source": "shift-ecommerce-api",
+  "resources": [
+    {
+      "_id": "wrk_shift",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "SHIFT — API",
+      "description": "Coleção de testes da API do e-commerce de tênis"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_shift",
+      "name": "Local",
+      "data": {
+        "base_url": "http://localhost:3333"
+      }
+    },
+    {
+      "_id": "fld_health",
+      "_type": "request_group",
+      "parentId": "wrk_shift",
+      "name": "Health"
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "fld_health",
+      "name": "Health check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health"
+    },
+
+    {
+      "_id": "fld_products",
+      "_type": "request_group",
+      "parentId": "wrk_shift",
+      "name": "Products"
+    },
+    {
+      "_id": "req_products_list",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Listar produtos",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products"
+    },
+    {
+      "_id": "req_products_list_filtros",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Listar produtos (com filtros)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products",
+      "parameters": [
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "10" },
+        { "name": "brand", "value": "Nike" },
+        { "name": "category", "value": "Corrida" },
+        { "name": "search", "value": "" },
+        { "name": "minPrice", "value": "" },
+        { "name": "maxPrice", "value": "" }
+      ]
+    },
+    {
+      "_id": "req_products_get",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Buscar produto por ID",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products/1"
+    },
+    {
+      "_id": "req_products_create",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Criar produto",
+      "method": "POST",
+      "url": "{{ _.base_url }}/products",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Gel-Kayano 30\",\n  \"descricao\": \"Amortecimento premium pra longas distâncias\",\n  \"precoBase\": 999.00,\n  \"brandId\": 1,\n  \"categoryId\": 1\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_products_update",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Atualizar produto",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/products/1",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"precoBase\": 849.00\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "_id": "req_products_delete",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Excluir produto",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/products/1"
+    },
+
+    {
+      "_id": "fld_brands",
+      "_type": "request_group",
+      "parentId": "wrk_shift",
+      "name": "Brands"
+    },
+    {
+      "_id": "req_brands_list",
+      "_type": "request",
+      "parentId": "fld_brands",
+      "name": "Listar marcas",
+      "method": "GET",
+      "url": "{{ _.base_url }}/brands"
+    },
+    {
+      "_id": "req_brands_create",
+      "_type": "request",
+      "parentId": "fld_brands",
+      "name": "Criar marca",
+      "method": "POST",
+      "url": "{{ _.base_url }}/brands",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Asics\",\n  \"logoUrl\": null\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    },
+
+    {
+      "_id": "fld_categories",
+      "_type": "request_group",
+      "parentId": "wrk_shift",
+      "name": "Categories"
+    },
+    {
+      "_id": "req_categories_list",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Listar categorias",
+      "method": "GET",
+      "url": "{{ _.base_url }}/categories"
+    },
+    {
+      "_id": "req_categories_list_tipo",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Listar categorias (por tipo)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/categories",
+      "parameters": [{ "name": "tipo", "value": "GENERO" }]
+    },
+    {
+      "_id": "req_categories_create",
+      "_type": "request",
+      "parentId": "fld_categories",
+      "name": "Criar categoria",
+      "method": "POST",
+      "url": "{{ _.base_url }}/categories",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Trail Running\",\n  \"tipo\": \"CATEGORIA\"\n}"
+      },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }]
+    }
+  ]
+}
