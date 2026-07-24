@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import axios from 'axios'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const email = ref('')
 const senha = ref('')
@@ -19,12 +22,14 @@ async function handleSubmit() {
 
   carregando.value = true
   try {
-    // TODO: substituir pela chamada real à API (POST /auth/login)
-    // const response = await api.post('/auth/login', { email: email.value, senha: senha.value })
-    console.log('Login com:', email.value)
+    await authStore.login(email.value, senha.value)
     router.push('/')
   } catch (e) {
-    erro.value = 'Email ou senha inválidos.'
+    if (axios.isAxiosError(e) && e.response?.data?.error) {
+      erro.value = e.response.data.error
+    } else {
+      erro.value = 'Não foi possível entrar. Tente novamente.'
+    }
   } finally {
     carregando.value = false
   }

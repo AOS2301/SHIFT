@@ -2,9 +2,10 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import productsRoutes from "./routes/produto.routes";
-import brandsRoutes from "./routes/brand.routes";
-import categoriesRoutes from "./routes/categoria.routes";
+import produtoRoutes from "./routes/produto.routes";
+import brandRoutes from "./routes/brand.routes";
+import categoriaRoutes from "./routes/categoria.routes";
+import authRoutes from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -16,9 +17,10 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/products", productsRoutes);
-app.use("/brands", brandsRoutes);
-app.use("/categories", categoriesRoutes);
+app.use("/products", produtoRoutes);
+app.use("/brands", brandRoutes);
+app.use("/categories", categoriaRoutes);
+app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

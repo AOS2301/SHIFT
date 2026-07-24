@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import axios from 'axios'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const nome = ref('')
 const email = ref('')
@@ -31,12 +34,14 @@ async function handleSubmit() {
 
   carregando.value = true
   try {
-    // TODO: substituir pela chamada real à API (POST /auth/register)
-    // await api.post('/auth/register', { nome: nome.value, email: email.value, senha: senha.value })
-    console.log('Cadastro:', nome.value, email.value)
-    router.push('/login')
+    await authStore.register(nome.value, email.value, senha.value)
+    router.push('/')
   } catch (e) {
-    erro.value = 'Não foi possível criar sua conta. Tente novamente.'
+    if (axios.isAxiosError(e) && e.response?.data?.error) {
+      erro.value = e.response.data.error
+    } else {
+      erro.value = 'Não foi possível criar sua conta. Tente novamente.'
+    }
   } finally {
     carregando.value = false
   }
