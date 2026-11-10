@@ -2,11 +2,11 @@ import { Prisma } from "@prisma/client";
 
 // Tipo do produto retornado pelo repository, já com as relações incluídas
 type ProductWithRelations = Prisma.ProductGetPayload<{
-  include: { brand: true; category: true; variants: true };
+  include: { brand: true; category: true; gender: true; variants: true };
 }>;
 
 type ProductWithFullRelations = Prisma.ProductGetPayload<{
-  include: { brand: true; category: true; variants: true; images: true };
+  include: { brand: true; category: true; gender: true; variants: true; images: true };
 }>;
 
 export interface ProductDTO {
@@ -14,9 +14,13 @@ export interface ProductDTO {
   nome: string;
   descricao: string | null;
   precoBase: number;
+  precoPromocional: number | null;
+  // Preço efetivamente cobrado (promocional se houver, senão o base)
+  precoFinal: number;
   imagemPrincipal: string | null;
   marca: { id: number; nome: string; logoUrl: string | null };
   categoria: { id: number; nome: string; tipo: string };
+  genero: { id: number; nome: string } | null;
   variantes: {
     id: number;
     tamanho: number;
@@ -37,6 +41,15 @@ export interface PaginatedProductsDTO {
   };
 }
 
+// Regra única de preço: se existe preço promocional, é ele que vale.
+// Usada na listagem, no carrinho e no fechamento do pedido.
+export function precoEfetivo(product: {
+  precoBase: Prisma.Decimal | number;
+  precoPromocional?: Prisma.Decimal | number | null;
+}): number {
+  return Number(product.precoPromocional ?? product.precoBase);
+}
+
 // Converte o resultado "cru" do banco (com Decimal, nomes internos, etc.)
 // no formato exato que a API expõe pro cliente.
 export function toProductDTO(
@@ -47,6 +60,9 @@ export function toProductDTO(
     nome: product.nome,
     descricao: product.descricao,
     precoBase: Number(product.precoBase),
+    precoPromocional:
+      product.precoPromocional != null ? Number(product.precoPromocional) : null,
+    precoFinal: precoEfetivo(product),
     imagemPrincipal: product.imagemPrincipal,
     marca: {
       id: product.brand.id,
@@ -58,6 +74,9 @@ export function toProductDTO(
       nome: product.category.nome,
       tipo: product.category.tipo,
     },
+    genero: product.gender
+      ? { id: product.gender.id, nome: product.gender.nome }
+      : null,
     variantes: product.variants.map((v) => ({
       id: v.id,
       tamanho: v.tamanho,

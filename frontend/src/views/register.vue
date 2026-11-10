@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useToastStore } from '../stores/toast'
 import axios from 'axios'
 
+const route = useRoute()
 const router = useRouter()
+const toastStore = useToastStore()
+
+// Depois de entrar, volta pra onde a pessoa estava (ex: /carrinho).
+// Só aceita caminho interno ("/algo") pra não redirecionar pra outro site.
+const redirect = computed(() => {
+  const destino = route.query.redirect
+  return typeof destino === 'string' && /^\/(?!\/)/.test(destino) ? destino : '/'
+})
 const authStore = useAuthStore()
 
 const nome = ref('')
@@ -35,7 +45,8 @@ async function handleSubmit() {
   carregando.value = true
   try {
     await authStore.register(nome.value, email.value, senha.value)
-    router.push('/')
+    toastStore.sucesso(`Conta criada. Bem-vindo, ${authStore.primeiroNome}!`)
+    router.push(redirect.value)
   } catch (e) {
     if (axios.isAxiosError(e) && e.response?.data?.error) {
       erro.value = e.response.data.error
@@ -122,7 +133,7 @@ async function handleSubmit() {
 
         <p class="text-center text-sm text-ink-secondary mt-6">
           Já tem conta?
-          <router-link to="/login" class="text-ink-text font-bold hover:text-court-orange transition-colors">
+          <router-link :to="{ path: '/login', query: route.query }" class="text-ink-text font-bold hover:text-court-orange transition-colors">
             Entrar
           </router-link>
         </p>

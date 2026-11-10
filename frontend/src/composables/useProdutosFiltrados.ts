@@ -12,25 +12,37 @@ import { produtoService, type Produto, type ListarProdutosParams } from '../serv
  */
 export function useProdutosFiltrados(filtros: Ref<ListarProdutosParams>) {
   const produtos = ref<Produto[]>([])
+  const total = ref(0)
+  const totalPaginas = ref(1)
   const carregando = ref(true)
   const erro = ref('')
 
+  // Cada busca ganha um número; se uma resposta antiga chegar depois de uma
+  // mais nova (digitação rápida na busca), ela é descartada.
+  let buscaAtual = 0
+
   async function buscar() {
+    const estaBusca = ++buscaAtual
     carregando.value = true
     erro.value = ''
 
     try {
       const resultado = await produtoService.listar(filtros.value)
+      if (estaBusca !== buscaAtual) return
       produtos.value = resultado.data
+      total.value = resultado.pagination.total
+      totalPaginas.value = Math.max(1, resultado.pagination.totalPages)
     } catch (e) {
+      if (estaBusca !== buscaAtual) return
       erro.value = 'Não foi possível carregar os produtos. Tente novamente.'
       produtos.value = []
+      total.value = 0
     } finally {
-      carregando.value = false
+      if (estaBusca === buscaAtual) carregando.value = false
     }
   }
 
   watch(filtros, buscar, { immediate: true, deep: true })
 
-  return { produtos, carregando, erro, recarregar: buscar }
+  return { produtos, total, totalPaginas, carregando, erro, recarregar: buscar }
 }

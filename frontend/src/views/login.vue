@@ -1,10 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useToastStore } from '../stores/toast'
 import axios from 'axios'
 
+const route = useRoute()
 const router = useRouter()
+const toastStore = useToastStore()
+
+// Depois de entrar, volta pra onde a pessoa estava (ex: /carrinho).
+// Só aceita caminho interno ("/algo") pra não redirecionar pra outro site.
+const redirect = computed(() => {
+  const destino = route.query.redirect
+  return typeof destino === 'string' && /^\/(?!\/)/.test(destino) ? destino : '/'
+})
 const authStore = useAuthStore()
 
 const email = ref('')
@@ -23,7 +33,8 @@ async function handleSubmit() {
   carregando.value = true
   try {
     await authStore.login(email.value, senha.value)
-    router.push('/')
+    toastStore.sucesso(`Bem-vindo de volta, ${authStore.primeiroNome}!`)
+    router.push(redirect.value)
   } catch (e) {
     if (axios.isAxiosError(e) && e.response?.data?.error) {
       erro.value = e.response.data.error
@@ -56,6 +67,7 @@ async function handleSubmit() {
             <input
               v-model="email"
               type="email"
+              autocomplete="email"
               placeholder="seuemail@exemplo.com"
               class="w-full bg-bg border border-line rounded px-4 h-11 text-sm focus:outline-none focus:border-court-orange"
             />
@@ -68,6 +80,7 @@ async function handleSubmit() {
             <input
               v-model="senha"
               type="password"
+              autocomplete="current-password"
               placeholder="••••••••"
               class="w-full bg-bg border border-line rounded px-4 h-11 text-sm focus:outline-none focus:border-court-orange"
             />
@@ -86,7 +99,7 @@ async function handleSubmit() {
 
         <p class="text-center text-sm text-ink-secondary mt-6">
           Não tem conta?
-          <router-link to="/cadastro" class="text-ink-text font-bold hover:text-court-orange transition-colors">
+          <router-link :to="{ path: '/cadastro', query: route.query }" class="text-ink-text font-bold hover:text-court-orange transition-colors">
             Criar conta
           </router-link>
         </p>

@@ -22,4 +22,9 @@ export const authService = {
     const { data } = await api.post<AuthResponse>('/auth/login', { email, senha })
     return data
   },
+
+  async me(): Promise<Usuario> {
+    const { data } = await api.get<Usuario>('/auth/me')
+    return data
+  },
 }

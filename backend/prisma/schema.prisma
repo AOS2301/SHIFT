@@ -75,7 +75,8 @@ model Category {
   nome String
   tipo CategoryType
 
-  products Product[]
+  products       Product[]
+  genderProducts Product[] @relation("ProductGender")
 
   @@unique([nome, tipo])
   @@map("categories")
@@ -90,6 +91,9 @@ model Product {
   nome            String
   descricao       String?
   precoBase       Decimal  @map("preco_base") @db.Decimal(10, 2)
+  // Preço promocional (opcional). Quando preenchido, é o preço cobrado e o
+  // produto aparece em /promocao.
+  precoPromocional Decimal? @map("preco_promocional") @db.Decimal(10, 2)
   imagemPrincipal String?  @map("imagem_principal")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -100,11 +104,16 @@ model Product {
   categoryId Int      @map("category_id")
   category   Category @relation(fields: [categoryId], references: [id])
 
+  // Gênero (Category com tipo GENERO): Masculino, Feminino, Infantil, Unissex
+  genderId Int?      @map("gender_id")
+  gender   Category? @relation("ProductGender", fields: [genderId], references: [id])
+
   variants ProductVariant[]
   images   ProductImage[]
 
   @@index([brandId])
   @@index([categoryId])
+  @@index([genderId])
   @@map("products")
 }
 
