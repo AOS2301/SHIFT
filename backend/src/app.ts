@@ -5,6 +5,8 @@ import produtoRoutes from "./routes/produto.routes";
 import brandRoutes from "./routes/brand.routes";
 import categoriaRoutes from "./routes/categoria.routes";
 import authRoutes from "./routes/auth.routes";
+import carrinhoRoutes from "./routes/carrinho.routes";
+import pedidoRoutes from "./routes/pedido.routes";
 
 import { prisma } from "./lib/prisma";
 
@@ -16,7 +18,7 @@ export const app = express();
 const allowedOrigins = [
   "http://localhost:5173", // frontend em dev (Vite)
   process.env.FRONTEND_URL, // frontend publicado (Vercel)
-].filter((origin): origin is string => Boolean(origin));;
+].filter((origin): origin is string => Boolean(origin));
 
 app.use(
   cors({
@@ -38,3 +40,5 @@ app.use("/products", produtoRoutes);
 app.use("/brands", brandRoutes);
 app.use("/categories", categoriaRoutes);
 app.use("/auth", authRoutes);
+app.use("/cart", carrinhoRoutes);
+app.use("/orders", pedidoRoutes);

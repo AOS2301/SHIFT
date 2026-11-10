@@ -5,6 +5,7 @@ export interface ProductFilters {
   where: Prisma.ProductWhereInput;
   skip: number;
   take: number;
+  orderBy?: Prisma.ProductOrderByWithRelationInput;
 }
 
 export interface CreateProductData {
@@ -12,8 +13,10 @@ export interface CreateProductData {
   descricao?: string;
   precoBase: number;
   imagemPrincipal?: string;
+  precoPromocional?: number | null;
   brandId: number;
   categoryId: number;
+  genderId?: number | null;
 }
 
 export interface UpdateProductData {
@@ -21,24 +24,27 @@ export interface UpdateProductData {
   descricao?: string;
   precoBase?: number;
   imagemPrincipal?: string;
+  precoPromocional?: number | null;
   brandId?: number;
   categoryId?: number;
+  genderId?: number | null;
 }
 
 const productWithRelations = {
   brand: true,
   category: true,
-  variants: true,
+  gender: true,
+  variants: { orderBy: { tamanho: "asc" } },
 } satisfies Prisma.ProductInclude;
 
 export const productRepository = {
-  async findMany({ where, skip, take }: ProductFilters) {
+  async findMany({ where, skip, take, orderBy }: ProductFilters) {
     return prisma.product.findMany({
       where,
       skip,
       take,
       include: productWithRelations,
-      orderBy: { createdAt: "desc" },
+      orderBy: orderBy ?? { createdAt: "desc" },
     });
   },
 

@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { usuarioRepository } from "../repositories/usuario.repository";
-import { toUsuarioDTO, AuthResponseDTO } from "../dto/usuario.dto";
-import { ValidationError } from "../errors/AppError";
+import { toUsuarioDTO, AuthResponseDTO, UsuarioDTO } from "../dto/usuario.dto";
+import { ValidationError, UnauthorizedError } from "../errors/AppError";
 
 export interface RegisterInput {
   nome?: string;
@@ -64,6 +64,16 @@ export const authService = {
     const token = gerarToken(usuario.id);
 
     return { usuario: toUsuarioDTO(usuario), token };
+  },
+
+  // Dados do usuário dono do token — o frontend usa pra validar a sessão
+  // salva ao recarregar a página.
+  async me(userId: number): Promise<UsuarioDTO> {
+    const usuario = await usuarioRepository.findById(userId);
+    if (!usuario) {
+      throw new UnauthorizedError("Sessão inválida");
+    }
+    return toUsuarioDTO(usuario);
   },
 
   async login(input: LoginInput): Promise<AuthResponseDTO> {

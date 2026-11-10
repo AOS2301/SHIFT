@@ -20,6 +20,14 @@ export async function login(req: Request, res: Response) {
   }
 }
 
+export async function me(req: Request, res: Response) {
+  try {
+    res.json(await authService.me(req.userId!));
+  } catch (error) {
+    handleError(error, res);
+  }
+}
+
 function handleError(error: unknown, res: Response) {
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({ error: error.message });

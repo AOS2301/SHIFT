@@ -13,6 +13,9 @@ export interface ListProductsInput {
   brand?: string;
   category?: string;
   search?: string;
+  gender?: string;
+  promo?: string | boolean;
+  sort?: string;
   minPrice?: string | number;
   maxPrice?: string | number;
 }
@@ -22,8 +25,33 @@ export interface CreateProductInput {
   descricao?: string;
   precoBase?: number | string;
   imagemPrincipal?: string;
+  precoPromocional?: number | string | null;
   brandId?: number | string;
   categoryId?: number | string;
+  genderId?: number | string | null;
+}
+
+// Ordenações aceitas em GET /products?sort=...
+const SORT_OPTIONS: Record<string, Prisma.ProductOrderByWithRelationInput> = {
+  recentes: { createdAt: "desc" },
+  preco_asc: { precoBase: "asc" },
+  preco_desc: { precoBase: "desc" },
+  nome: { nome: "asc" },
+};
+
+function parsePrecoPromocional(
+  valor: number | string | null,
+  precoBase: number
+): number | null {
+  if (valor === null || valor === "") return null;
+  const preco = Number(valor);
+  if (Number.isNaN(preco) || preco <= 0) {
+    throw new ValidationError("precoPromocional deve ser um número maior que zero");
+  }
+  if (preco >= precoBase) {
+    throw new ValidationError("precoPromocional deve ser menor que precoBase");
+  }
+  return preco;
 }
 
 const DEFAULT_LIMIT = 12;
@@ -46,7 +74,22 @@ export const productService = {
     }
 
     if (input.search) {
-      where.nome = { contains: input.search, mode: "insensitive" };
+      // Busca no nome do produto OU no nome da marca ("nike" acha os Nike)
+      where.OR = [
+        { nome: { contains: input.search, mode: "insensitive" } },
+        { brand: { nome: { contains: input.search, mode: "insensitive" } } },
+      ];
+    }
+
+    if (input.gender) {
+      // Produtos Unissex aparecem tanto em Masculino quanto em Feminino
+      const nomes = [input.gender];
+      if (/^(masculino|feminino)$/i.test(input.gender)) nomes.push("Unissex");
+      where.gender = { nome: { in: nomes, mode: "insensitive" } };
+    }
+
+    if (input.promo === true || input.promo === "true" || input.promo === "1") {
+      where.precoPromocional = { not: null };
     }
 
     if (input.minPrice || input.maxPrice) {
@@ -56,7 +99,12 @@ export const productService = {
     }
 
     const [products, total] = await Promise.all([
-      productRepository.findMany({ where, skip, take: limit }),
+      productRepository.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: SORT_OPTIONS[input.sort ?? ""] ?? SORT_OPTIONS.recentes!,
+      }),
       productRepository.count(where),
     ]);
 
@@ -107,6 +155,12 @@ export const productService = {
     };
     if (input.descricao !== undefined) data.descricao = input.descricao;
     if (input.imagemPrincipal !== undefined) data.imagemPrincipal = input.imagemPrincipal;
+    if (input.precoPromocional !== undefined) {
+      data.precoPromocional = parsePrecoPromocional(input.precoPromocional, precoBase);
+    }
+    if (input.genderId !== undefined) {
+      data.genderId = input.genderId === null ? null : Number(input.genderId);
+    }
 
     const created = await productRepository.create(data);
 
@@ -140,6 +194,15 @@ export const productService = {
     if (input.imagemPrincipal !== undefined) updateData.imagemPrincipal = input.imagemPrincipal;
     if (input.brandId !== undefined) updateData.brandId = Number(input.brandId);
     if (input.categoryId !== undefined) updateData.categoryId = Number(input.categoryId);
+    if (input.precoPromocional !== undefined) {
+      updateData.precoPromocional = parsePrecoPromocional(
+        input.precoPromocional,
+        updateData.precoBase ?? Number(existing.precoBase)
+      );
+    }
+    if (input.genderId !== undefined) {
+      updateData.genderId = input.genderId === null ? null : Number(input.genderId);
+    }
 
     await productRepository.update(id, updateData);
 

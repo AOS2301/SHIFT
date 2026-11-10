@@ -19,7 +19,8 @@ INSERT INTO categories (nome, tipo) VALUES
   ('Lifestyle', 'CATEGORIA'),
   ('Masculino', 'GENERO'),
   ('Feminino', 'GENERO'),
-  ('Unissex', 'GENERO')
+  ('Unissex', 'GENERO'),
+  ('Infantil', 'GENERO')
 ON CONFLICT (nome, tipo) DO NOTHING;
 
 -- ============================================
@@ -119,6 +120,55 @@ WITH b AS (SELECT id FROM brands WHERE nome = 'Adidas'),
 INSERT INTO product_variants (tamanho, cor, estoque, sku, product_id)
 SELECT tamanho, 'Preto/Vermelho', 2, 'AD-DMC-' || tamanho, p.id
 FROM p, unnest(ARRAY[40, 42, 44]) AS tamanho;
+
+-- ============================================
+-- PRODUTOS INFANTIS (idempotente: só insere se ainda não existir)
+-- ============================================
+WITH b AS (SELECT id FROM brands WHERE nome = 'Nike'),
+     c AS (SELECT id FROM categories WHERE nome = 'Lifestyle' AND tipo = 'CATEGORIA'),
+     p AS (
+       INSERT INTO products (nome, descricao, preco_base, brand_id, category_id, updated_at)
+       SELECT 'Court Borough Kids', 'Visual de quadra retrô no tamanho dos pequenos', 349.00, b.id, c.id, now() FROM b, c
+       WHERE NOT EXISTS (SELECT 1 FROM products WHERE nome = 'Court Borough Kids')
+       RETURNING id
+     )
+INSERT INTO product_variants (tamanho, cor, estoque, sku, product_id)
+SELECT tamanho, 'Branco', 6, 'NK-CBK-' || tamanho, p.id
+FROM p, unnest(ARRAY[28, 30, 32, 34]) AS tamanho;
+
+WITH b AS (SELECT id FROM brands WHERE nome = 'Adidas'),
+     c AS (SELECT id FROM categories WHERE nome = 'Corrida' AND tipo = 'CATEGORIA'),
+     p AS (
+       INSERT INTO products (nome, descricao, preco_base, brand_id, category_id, updated_at)
+       SELECT 'Runfalcon Kids', 'Leve e resistente pra correr o recreio inteiro', 299.00, b.id, c.id, now() FROM b, c
+       WHERE NOT EXISTS (SELECT 1 FROM products WHERE nome = 'Runfalcon Kids')
+       RETURNING id
+     )
+INSERT INTO product_variants (tamanho, cor, estoque, sku, product_id)
+SELECT tamanho, 'Azul', 4, 'AD-RFK-' || tamanho, p.id
+FROM p, unnest(ARRAY[29, 31, 33]) AS tamanho;
+
+-- ============================================
+-- GÊNEROS (idempotente — pode rodar num banco que já tinha o seed antigo)
+-- ============================================
+UPDATE products SET gender_id = (SELECT id FROM categories WHERE nome = 'Unissex' AND tipo = 'GENERO')
+WHERE nome IN ('Old Skool', '550', 'Suede Classic', 'Air Force 1');
+
+UPDATE products SET gender_id = (SELECT id FROM categories WHERE nome = 'Masculino' AND tipo = 'GENERO')
+WHERE nome IN ('Air Max Pulse', 'Dame Certified');
+
+UPDATE products SET gender_id = (SELECT id FROM categories WHERE nome = 'Feminino' AND tipo = 'GENERO')
+WHERE nome IN ('Ultraboost Light');
+
+UPDATE products SET gender_id = (SELECT id FROM categories WHERE nome = 'Infantil' AND tipo = 'GENERO')
+WHERE nome IN ('Court Borough Kids', 'Runfalcon Kids');
+
+-- ============================================
+-- PROMOÇÕES (preço promocional < preço base)
+-- ============================================
+UPDATE products SET preco_promocional = 599.00 WHERE nome = 'Dame Certified';
+UPDATE products SET preco_promocional = 449.00 WHERE nome = 'Suede Classic';
+UPDATE products SET preco_promocional = 249.00 WHERE nome = 'Runfalcon Kids';
 
 -- ============================================
 -- CONFERÊNCIA
